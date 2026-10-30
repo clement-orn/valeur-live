@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Valeur live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EFEB; --surface:#F8FBF9; --ink:#13241A; --muted:#56675C; --line:#C9D5CD;
+  --pitch:#1E6A45; --pitch-ink:#FFFFFF; --amber:#9A6412; --amber-bg:#F4E6CC; --red:#B33A2A; --track:#D6E0DA;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1A14; --surface:#16251D; --ink:#E6EEE9; --muted:#93A69A; --line:#2A3D32;
+    --pitch:#3FA472; --pitch-ink:#08130D; --amber:#E0A53A; --amber-bg:#3A2E17; --red:#E06A55; --track:#22352A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1A14; --surface:#16251D; --ink:#E6EEE9; --muted:#93A69A; --line:#2A3D32;
+  --pitch:#3FA472; --pitch-ink:#08130D; --amber:#E0A53A; --amber-bg:#3A2E17; --red:#E06A55; --track:#22352A;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px 40px}
+h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:2.4rem;line-height:1;margin:6px 0 4px;letter-spacing:-0.01em}
+.lede{color:var(--muted);margin:0 0 18px;font-size:.95rem}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:.85rem;color:var(--muted);font-weight:500}
+.stepper{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg)}
+.stepper button{width:44px;border:0;background:transparent;color:var(--ink);font-size:1.4rem;cursor:pointer}
+.stepper button:active{background:var(--track)}
+.stepper input{flex:1;min-width:0;text-align:center;border:0;background:transparent;color:var(--ink);font-family:"Barlow Condensed",sans-serif;font-size:1.6rem;font-weight:600;padding:6px 0}
+input.num{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-family:"Barlow Condensed",sans-serif;font-size:1.5rem;font-weight:600;padding:8px 10px}
+input.name{width:100%;border:0;border-bottom:1px dashed var(--line);background:transparent;color:var(--muted);font-family:inherit;font-size:.85rem;padding:2px 0}
+input:focus-visible,button:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+.score .dash{font-family:"Barlow Condensed",sans-serif;font-size:1.8rem;padding-bottom:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:8px 10px;font-family:inherit;font-size:.9rem;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--pitch);color:var(--pitch-ink);border-color:var(--pitch)}
+.label{font-size:.85rem;color:var(--muted);font-weight:500;margin:0 0 8px}
+.books{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.book.best input.num{border-color:var(--pitch);box-shadow:0 0 0 1px var(--pitch) inset}
+/* Verdict : l'élément central */
+.verdict{border-radius:16px;padding:18px 16px;margin:16px 0 12px;background:var(--pitch);color:var(--pitch-ink);transition:background .2s}
+.verdict.info{background:var(--ink);color:var(--bg)}
+.verdict.no{background:var(--amber-bg);color:var(--ink)}
+.verdict.empty{background:var(--surface);color:var(--muted);border:1px dashed var(--line)}
+.call{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:2.6rem;line-height:1;margin:0 0 4px}
+.why{margin:0 0 14px;font-size:.95rem}
+.figs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fig b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:2rem;font-weight:600;line-height:1}
+.fig small{font-size:.8rem;opacity:.85}
+.bar{position:relative;height:10px;border-radius:5px;background:rgba(127,127,127,.25);margin:16px 0 6px}
+.bar i{position:absolute;top:-4px;width:3px;height:18px;border-radius:2px}
+.bar .you{background:currentColor}
+.bar .book{background:currentColor;opacity:.45}
+.legend{display:flex;justify-content:space-between;font-size:.8rem;opacity:.85}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 14px;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toast{font-size:.85rem;color:var(--muted);min-height:1.2em;margin:6px 0 0}
+h2{font-family:"Barlow Condensed",sans-serif;font-size:1.6rem;font-weight:700;margin:26px 0 8px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.summary div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.summary b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:1.6rem;line-height:1.1}
+.summary small{color:var(--muted);font-size:.8rem}
+.log{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.log li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.log .top{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.log .meta{color:var(--muted);font-size:.85rem}
+.log .res{display:flex;gap:6px;margin-top:8px}
+.log .res button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px;font-family:inherit;cursor:pointer}
+.log .res button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.empty-log{color:var(--muted);font-size:.95rem}
+.notes{color:var(--muted);font-size:.85rem;margin-top:22px}
+.notes p{margin:0 0 8px}
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:12px;padding:24px 12px;border:2px dashed var(--line);border-radius:12px;background:var(--bg);text-align:center;cursor:pointer}
+.drop b{font-family:"Barlow Condensed",sans-serif;font-size:1.4rem;font-weight:600}
+.drop small{color:var(--muted);font-size:.85rem}
+.drop.over{border-color:var(--pitch);background:var(--surface)}
+.tray{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tray img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.noxg summary{cursor:pointer;font-weight:600;font-size:.9rem;margin-top:12px}
+.est{margin:12px 0 0;font-weight:600}
+.settings summary{cursor:pointer;font-weight:600}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){.verdict{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Valeur live</h1>
+  <p class="lede">Remplis au moment où tu veux entrer. L’outil te donne la cote minimum : si un de tes sites propose au moins cette cote, le pari a de la valeur. Sinon, tu passes.</p>
+
+  <div class="block">
+    <p class="label">Je parie sur</p>
+    <div class="seg" id="side">
+      <button type="button" data-s="home" aria-pressed="true">Domicile</button>
+      <button type="button" data-s="away" aria-pressed="false">Extérieur</button>
+    </div>
+    <p class="label" style="margin-top:12px">Pari</p>
+    <div class="seg" id="mkt">
+      <button type="button" data-m="win" aria-pressed="true">Victoire</button>
+      <button type="button" data-m="score" aria-pressed="false">Marque +0,5</button>
+      <button type="button" data-m="dc" aria-pressed="false">Victoire ou nul</button>
+    </div>
+    <button type="button" class="btn" id="resetForm" style="margin-top:12px">Nouveau match</button>
+  </div>
+
+  <div class="block" id="photoBlock" hidden>
+    <p class="label">Lire les screens</p>
+    <p class="lede" style="margin:0 0 4px">En une fois : Packball (graphique de pression), Flashscore Résumé (buts, cartons, changements, buts refusés, penalties) et Flashscore Stats, onglet Match (xG, tirs).</p>
+    <label class="drop" id="drop"><input type="file" id="shot" accept="image/*" multiple style="position:absolute;opacity:0;width:1px;height:1px;left:0;top:0"><b>Dépose tes captures ici</b><small>ou appuie pour les choisir, ou colle-les avec Ctrl+V</small></label>
+    <div class="tray" id="tray" hidden></div>
+    <div class="actions" id="trayActions" style="margin-top:10px" hidden><button type="button" class="btn primary" id="readBtn">Lire les captures</button><button type="button" class="btn" id="clearBtn">Vider</button></div>
+    <p class="toast" id="photoStatus"></p>
+  </div>
+
+  <div class="block">
+    <div class="row">
+      <label class="field"><span>Minute</span>
+        <div class="stepper"><button type="button" data-step="minute:-1" aria-label="Minute moins un">−</button><input id="minute" inputmode="numeric" value="86"><button type="button" data-step="minute:1" aria-label="Minute plus un">+</button></div>
+      </label>
+      <label class="field"><span>Temps annoncé (si affiché)</span><input class="num" id="announced" inputmode="numeric" placeholder="vide"></label>
+    </div>
+    <div class="score" style="margin-top:12px">
+      <label class="field"><span>Score domicile</span>
+        <div class="stepper"><button type="button" data-step="sHome:-1" aria-label="Score domicile moins un">−</button><input id="sHome" inputmode="numeric" value="1"><button type="button" data-step="sHome:1" aria-label="Score domicile plus un">+</button></div>
+      </label>
+      <div class="dash">–</div>
+      <label class="field"><span>Score extérieur</span>
+        <div class="stepper"><button type="button" data-step="sAway:-1" aria-label="Score extérieur moins un">−</button><input id="sAway" inputmode="numeric" value="1"><button type="button" data-step="sAway:1" aria-label="Score extérieur plus un">+</button></div>
+      </label>
+    </div>
+  </div>
+
+  <div class="block">
+    <p class="label">Arrêts de jeu depuis la mi-temps</p>
+    <div class="row">
+      <label class="field"><span>Buts (hors penalty)</span>
+        <div class="stepper"><button type="button" data-step="evG:-1" aria-label="Buts moins un">−</button><input id="evG" inputmode="numeric" value="0"><button type="button" data-step="evG:1" aria-label="Buts plus un">+</button></div>
+      </label>
+      <label class="field"><span>Penalties</span>
+        <div class="stepper"><button type="button" data-step="evP:-1" aria-label="Penalties moins un">−</button><input id="evP" inputmode="numeric" value="0"><button type="button" data-step="evP:1" aria-label="Penalties plus un">+</button></div>
+      </label>
+      <label class="field"><span>Arrêts pour changements</span>
+        <div class="stepper"><button type="button" data-step="evS:-1" aria-label="Arrêts pour changements moins un">−</button><input id="evS" inputmode="numeric" value="0"><button type="button" data-step="evS:1" aria-label="Arrêts pour changements plus un">+</button></div>
+      </label>
+      <label class="field"><span>Cartons jaunes</span>
+        <div class="stepper"><button type="button" data-step="evC:-1" aria-label="Cartons jaunes moins un">−</button><input id="evC" inputmode="numeric" value="0"><button type="button" data-step="evC:1" aria-label="Cartons jaunes plus un">+</button></div>
+      </label>
+      <label class="field"><span>Cartons rouges</span>
+        <div class="stepper"><button type="button" data-step="evR:-1" aria-label="Cartons rouges moins un">−</button><input id="evR" inputmode="numeric" value="0"><button type="button" data-step="evR:1" aria-label="Cartons rouges plus un">+</button></div>
+      </label>
+      <label class="field"><span>Buts refusés</span>
+        <div class="stepper"><button type="button" data-step="evD:-1" aria-label="Buts refusés moins un">−</button><input id="evD" inputmode="numeric" value="0"><button type="button" data-step="evD:1" aria-label="Buts refusés plus un">+</button></div>
+      </label>
+    </div>
+    <p class="est" id="estAdded">Temps additionnel estimé : –</p>
+  </div>
+
+  <div class="block">
+    <div class="row">
+      <label class="field"><span>Cote pré-match domicile</span><input class="num" id="preHome" inputmode="decimal" placeholder="1,91"></label>
+      <label class="field"><span>Cote pré-match extérieur</span><input class="num" id="preAway" inputmode="decimal" placeholder="4,08"></label>
+    </div>
+    <p class="label" style="margin-top:12px">Carton rouge pour</p>
+    <div class="seg" id="red">
+      <button type="button" data-r="none" aria-pressed="true">Aucun</button>
+      <button type="button" data-r="home" aria-pressed="false">Domicile</button>
+      <button type="button" data-r="away" aria-pressed="false">Extérieur</button>
+    </div>
+    <label class="field" id="redMinWrap" style="margin-top:12px" hidden><span>Minute du carton rouge</span>
+      <div class="stepper"><button type="button" data-step="redMin:-1" aria-label="Minute du carton moins un">−</button><input id="redMin" inputmode="numeric" value="60"><button type="button" data-step="redMin:1" aria-label="Minute du carton plus un">+</button></div>
+    </label>
+  </div>
+
+  <div class="block">
+    <p class="label">xG du match entier à la minute indiquée (onglet « Match » de Flashscore)</p>
+    <div class="row">
+      <label class="field"><span>xG domicile</span><input class="num" id="xHome" inputmode="decimal" placeholder="1,80"></label>
+      <label class="field"><span>xG extérieur</span><input class="num" id="xAway" inputmode="decimal" placeholder="0,10"></label>
+    </div>
+    <details class="noxg">
+      <summary>Pas d’xG ? Estime-le avec les tirs</summary>
+      <div class="row" style="margin-top:10px">
+        <label class="field"><span>Tirs domicile</span><input class="num" id="tHome" inputmode="numeric" placeholder="17"></label>
+        <label class="field"><span>dont cadrés</span><input class="num" id="cHome" inputmode="numeric" placeholder="6"></label>
+        <label class="field"><span>Tirs extérieur</span><input class="num" id="tAway" inputmode="numeric" placeholder="1"></label>
+        <label class="field"><span>dont cadrés</span><input class="num" id="cAway" inputmode="numeric" placeholder="0"></label>
+      </div>
+      <button type="button" class="btn" id="useShots" style="margin-top:10px">Remplir l’xG avec ces tirs</button>
+    </details>
+  </div>
+
+  <div class="block">
+    <p class="label">Pression Packball, 10 dernières minutes</p>
+    <p class="label" style="margin:0 0 6px">Domicile</p>
+    <div class="seg" id="prH">
+      <button type="button" data-p="tres_forte" aria-pressed="false">Très forte</button>
+      <button type="button" data-p="forte" aria-pressed="false">Forte</button>
+      <button type="button" data-p="moyenne" aria-pressed="false">Moyenne</button>
+      <button type="button" data-p="faible" aria-pressed="false">Faible</button>
+    </div>
+    <p class="label" style="margin:12px 0 6px">Extérieur</p>
+    <div class="seg" id="prA">
+      <button type="button" data-p="tres_forte" aria-pressed="false">Très forte</button>
+      <button type="button" data-p="forte" aria-pressed="false">Forte</button>
+      <button type="button" data-p="moyenne" aria-pressed="false">Moyenne</button>
+      <button type="button" data-p="faible" aria-pressed="false">Faible</button>
+    </div>
+    <label class="field" style="margin-top:12px"><span>Possession de l’équipe pariée (%)</span><input class="num" id="posSel" inputmode="numeric" placeholder="54"></label>
+    <p class="lede" style="margin:10px 0 0">La pression compte dans le calcul : forte +20 %, faible −20 % sur le rythme de l’équipe (réglable). Chiffres provisoires, recalés avec tes 20 matchs. La possession est seulement notée dans ton suivi.</p>
+  </div>
+
+  <div class="block">
+    <label class="field"><span>Marge de sécurité exigée (%)</span>
+      <div class="stepper"><button type="button" data-step="margin:-1" aria-label="Marge moins un">−</button><input id="margin" inputmode="numeric" value="10"><button type="button" data-step="margin:1" aria-label="Marge plus un">+</button></div>
+    </label>
+  </div>
+
+  <section class="verdict empty" id="verdict" aria-live="polite">
+    <p class="call" id="call">Entre l’xG</p>
+    <p class="why" id="why">Il faut au moins l’xG de l’équipe sur laquelle tu paries.</p>
+    <div class="figs">
+      <div class="fig"><b id="fP">–</b><small>probabilité</small></div>
+      <div class="fig"><b id="fFair">–</b><small>cote juste</small></div>
+      <div class="fig"><b id="fMin">–</b><small>cote minimum</small></div>
+    </div>
+  </section>
+
+  <div class="block">
+    <div class="row">
+      <label class="field"><span>Match (pour ton suivi)</span><input class="num" id="label" style="font-family:inherit;font-size:1rem;font-weight:500" placeholder="Monaco – Lille"></label>
+      <label class="field"><span>Cote vue (facultatif)</span><input class="num" id="oddsSeen" inputmode="decimal" placeholder="3,10"></label>
+    </div>
+    <div class="actions" style="margin-top:12px">
+      <button type="button" class="btn primary" id="save">Noter cette situation</button>
+      <button type="button" class="btn" id="copy">Copier la proba pour Bet-Analytix</button>
+    </div>
+    <p class="toast" id="toast"></p>
+  </div>
+
+  <h2>Suivi sur papier</h2>
+  <div class="summary">
+    <div><b id="sN">0</b><small>situations réglées</small></div>
+    <div><b id="sW">0 / 0</b><small>gagnés / attendus</small></div>
+    <div><b id="sR">–</b><small>ROI, si cote notée</small></div>
+  </div>
+  <div class="actions" style="margin-bottom:10px"><button type="button" class="btn" id="exportLog">Copier tout le suivi</button></div>
+  <ul class="log" id="log"></ul>
+
+  <details class="block settings" style="margin-top:22px">
+    <summary>Réglages du modèle</summary>
+    <div class="row" style="margin-top:12px">
+      <label class="field"><span>Bonus fin de match, après la 75e (%)</span><input class="num" id="pLate" inputmode="numeric" value="20"></label>
+      <label class="field"><span>Effet du carton rouge (%)</span><input class="num" id="pRed" inputmode="numeric" value="30"></label>
+      <label class="field"><span>Usure à 10, par 15 min (%)</span><input class="num" id="pWear" inputmode="numeric" value="5"></label>
+      <label class="field"><span>Poids de la cote pré-match (min)</span><input class="num" id="pK" inputmode="numeric" value="45"></label>
+      <label class="field"><span>Poussée de l’équipe menée, après la 75e (%)</span><input class="num" id="pPush" inputmode="numeric" value="60"></label>
+      <label class="field"><span>Effet pression très forte (%)</span><input class="num" id="pPrVF" inputmode="numeric" value="40"></label>
+      <label class="field"><span>Effet pression forte (%)</span><input class="num" id="pPrF" inputmode="numeric" value="20"></label>
+      <label class="field"><span>Effet pression faible (%)</span><input class="num" id="pPrW" inputmode="numeric" value="20"></label>
+    </div>
+    <button type="button" class="btn" id="resetSettings" style="margin-top:12px">Revenir aux réglages de départ</button>
+  </details>
+
+  <div class="notes">
+    <p>Le calcul suppose que chaque équipe garde le même rythme d’xG jusqu’au coup de sifflet, puis tire les buts restants au hasard (loi de Poisson). C’est une approximation : une équipe peut accélérer ou se replier.</p>
+    <p>La cote pré-match sert de point d’ancrage : elle tire l’estimation vers le niveau habituel de l’équipe, pour ne pas surréagir à quelques minutes de domination. Son poids se règle dans les réglages (45 minutes de jeu par défaut). Les deux cotes pré-match sont utilisées : ensemble, elles donnent le rapport de force entre les équipes et le nombre de buts attendu dans le match.</p>
+    <p>L’avantage du terrain n’est pas ajouté à part : il est déjà inclus dans la cote pré-match et dans l’xG du match. L’ajouter en plus le compterait deux fois.</p>
+    <p>Carton rouge : l’équipe à 11 contre 10 marque plus (+30 % par défaut), celle à 10 moins (−30 %). L’avantage grandit avec la fatigue de l’équipe réduite : +5 % par tranche de 15 minutes jouées à 10, plafonné à +20 %. L’outil tient compte de la part du match jouée avant le carton.</p>
+    <p>Fin de match : après la 75e, le niveau attendu est augmenté de 20 %, parce que les équipes poussent davantage.</p>
+    <p>Équipe menée : après la 75e, une équipe menée au score pousse beaucoup plus que son rythme moyen. Son rythme est augmenté de 60 % (réglable). Ce chiffre est provisoire : il sera recalé sur les cotes des bookmakers que tu noteras.</p>
+    <p>Pression Packball : une pression très forte sur les 10 dernières minutes augmente le rythme de l’équipe de 40 %, forte de 20 %, une pression faible le baisse de 20 %, moyenne ne change rien. Chiffres provisoires, à recaler sur les cotes du marché.</p>
+    <p>Temps additionnel : l’outil part de 1 minute 30, pour les blessures et les pertes de temps que tu ne vois pas. Il ajoute 30 secondes par but hors penalty, 1 minute 30 par penalty (marqué ou raté, le but ne se compte pas en plus), 15 secondes par arrêt pour changements (plusieurs changements à la même minute comptent pour un seul arrêt, ceux faits à la mi-temps ne comptent pas), 15 secondes par carton jaune, 1 minute par carton rouge et 1 minute 30 par but refusé. Dès que le panneau est affiché, le temps annoncé plus une minute remplace l’estimation, parce que le temps réellement joué dépasse souvent l’annonce.</p>
+    <p>Sans xG, l’outil peut l’estimer avec les tirs : environ 0,25 xG par tir cadré et 0,06 par tir non cadré. Prends les tirs du match entier, comme pour l’xG.</p>
+    <p>Pour « Marque +0,5 », seul l’xG de l’équipe pariée compte. Pour « Victoire » et « Victoire ou nul », l’autre équipe compte aussi, parce qu’un but de sa part peut faire perdre le pari. Elle est alors comptée au minimum à 0,003 xG par minute, pour ne pas ignorer le risque de contre.</p>
+    <p>Tous ces chiffres sont des ordres de grandeur. Ton suivi dira s’il faut les ajuster.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY_LOG='vl-log', KEY_SET='vl-settings';
+  var $=function(id){return document.getElementById(id)};
+  var state={w:'full',m:'win',side:'home',red:'none',prH:'',prA:''};
+  function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+  function num(v){if(v==null)return NaN;v=String(v).replace(',','.').trim();return v===''?NaN:parseFloat(v)}
+  function fr(x,d){return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  function cnt(id){var v=num($(id).value);return isNaN(v)?0:v}
+  function other(s){return s==='home'?'away':'home'}
+  function setSeg(id,attr,val){$(id).querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset[attr]===val?'true':'false')})}
+  function setRed(v,auto){state.red=v;state.redAuto=auto;setSeg('red','r',v)}
+
+  // Steppers et segments
+  document.querySelectorAll('[data-step]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var p=b.dataset.step.split(':'),el=$(p[0]);
+      el.value=Math.max(0,(parseInt(el.value,10)||0)+parseInt(p[1],10));calc();
+    });
+  });
+  function seg(id,key,attr,after){
+    $(id).addEventListener('click',function(e){
+      var b=e.target.closest('button');if(!b)return;
+      state[key]=b.dataset[attr];setSeg(id,attr,state[key]);
+      if(after)after();calc();
+    });
+  }
+  seg('mkt','m','m');
+  var prevSide='home';
+  seg('side','side','s',function(){
+    if(state.side!==prevSide){prevSide=state.side;var v=num($('posSel').value);if(!isNaN(v))$('posSel').value=Math.round(100-v)}
+    if(state.redAuto)setRed(other(state.side),true);
+  });
+  seg('red','red','r',function(){state.redManual=true;state.redAuto=false});
+  seg('prH','prH','p');seg('prA','prA','p');
+  document.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc)});
+
+  // Modèle
+  function pois(l,k){var p=Math.exp(-l);for(var i=1;i<=k;i++)p*=l/i;return p}
+  var TOTAL=2.6, DEF={pLate:20,pRed:30,pWear:5,pK:45,pPush:60,pPrVF:40,pPrF:20,pPrW:20};
+  var saved=load(KEY_SET,{});
+  Object.keys(DEF).forEach(function(k){
+    if(saved[k]!=null)$(k).value=saved[k];
+    $(k).addEventListener('input',function(){saved[k]=$(k).value;store(KEY_SET,saved)});
+  });
+  $('resetSettings').addEventListener('click',function(){saved={};Object.keys(DEF).forEach(function(k){$(k).value=DEF[k]});store(KEY_SET,saved);calc()});
+  function S(k){var v=num($(k).value);return isNaN(v)?DEF[k]:v}
+  function pWin(a,b){var p=0;for(var i=0;i<=10;i++)for(var j=0;j<i;j++)p+=pois(a,i)*pois(b,j);return p}
+  function priorRates(o,o2){
+    var target=Math.min(0.9,1/(o*1.05)),lo,hi,k,s;
+    if(!(o2>1)){
+      lo=-TOTAL;hi=TOTAL;
+      for(k=0;k<40;k++){s=(lo+hi)/2;if(pWin((TOTAL+s)/2,(TOTAL-s)/2)<target)lo=s;else hi=s}
+      s=(lo+hi)/2;return {a:(TOTAL+s)/2/90,b:(TOTAL-s)/2/90};
+    }
+    var t2=Math.min(0.9,1/(o2*1.05)),best=null;
+    for(var T=1.6;T<=3.81;T+=0.05){
+      lo=-T;hi=T;
+      for(k=0;k<30;k++){s=(lo+hi)/2;if(pWin((T+s)/2,(T-s)/2)<target)lo=s;else hi=s}
+      s=(lo+hi)/2;var a=(T+s)/2,b=(T-s)/2,err=Math.abs(pWin(b,a)-t2);
+      if(!best||err<best.err)best={err:err,a:a,b:b};
+    }
+    return {a:best.a/90,b:best.b/90};
+  }
+  function estAdded(){
+    var ann=num($('announced').value);
+    var e=1.5+0.5*cnt('evG')+1.5*cnt('evP')+0.25*cnt('evS')+0.25*cnt('evC')+1*cnt('evR')+1.5*cnt('evD');
+    var em=Math.floor(e),es=Math.round((e-em)*60);
+    $('estAdded').textContent=isNaN(ann)?'Temps additionnel estimé : '+em+' min'+(es?' '+es+' s':''):'Temps annoncé : '+ann+' min, compté '+(ann+1)+' min (le jeu dépasse souvent l’annonce)';
+    return isNaN(ann)?e:ann+1;
+  }
+
+  var last=null;
+  function calc(){calc2();saveForm()}
+  function calc2(){
+    var rc=cnt('evR');
+    if(rc>0&&state.red==='none'&&!state.redManual)setRed(other(state.side),true);
+    if(rc===0&&state.redAuto)setRed('none',false);
+    $('redMinWrap').hidden=state.red==='none';
+
+    var me=state.side,H=me==='home';
+    var minute=num($('minute').value),added=estAdded();
+    var sA=cnt(H?'sHome':'sAway'),sB=cnt(H?'sAway':'sHome');
+    var xA=num($(H?'xHome':'xAway').value),xB=num($(H?'xAway':'xHome').value);if(isNaN(xB))xB=0;
+    var margin=(num($('margin').value)||0)/100;
+
+    if(isNaN(xA)||isNaN(minute)){setEmpty('Entre l’xG','Il faut au moins l’xG de l’équipe sur laquelle tu paries ('+(H?'domicile':'extérieur')+').');return}
+    var w=state.w==='half'?minute-45:minute;
+    if(w<=0){setEmpty('Minute invalide','Vérifie la minute de jeu.');return}
+    var remaining=Math.max(0.5,90+(isNaN(added)?0:added)-minute);
+
+    var K=S('pK'),late=minute>=75?1+S('pLate')/100:1,base=S('pRed')/100,wear=S('pWear')/100;
+    var redRel=state.red==='none'?'none':(state.red===me?'team':'opp');
+    var oA=1,oB=1,pA=1,pB=1,f=0;
+    if(redRel!=='none'){
+      var rm=num($('redMin').value),since=isNaN(rm)?0:Math.max(minute-rm,0);
+      f=Math.min(since/w,1);
+      var upObs=1+base+wear*Math.min(since/30,4),upRem=1+base+wear*Math.min((since+remaining/2)/15,4),down=1-base;
+      if(redRel==='opp'){oA=upObs;pA=upRem;oB=pB=down}else{oB=upObs;pB=upRem;oA=pA=down}
+    }
+    var lateObs=state.w==='full'?late:1;
+    var eA=xA/(1-f+oA*f)*lateObs,eB=xB/(1-f+oB*f)*lateObs;
+    var pre=num($(H?'preHome':'preAway').value),pre2=num($(H?'preAway':'preHome').value),prior=pre>1?priorRates(pre,pre2):null;
+    var rA=prior?(eA+prior.a*late*K)/(w+K):eA/w;
+    var rB=prior?(eB+prior.b*late*K)/(w+K):eB/w;
+    if(minute>=75){var push=1+S('pPush')/100;if(sA<sB)rA*=push;else if(sB<sA)rB*=push}
+    var PF=1+S('pPrF')/100,PW=1-S('pPrW')/100;
+    var pmA=H?state.prH:state.prA,pmB=H?state.prA:state.prH;
+    var PVF=1+S('pPrVF')/100;
+    rA*=pmA==='tres_forte'?PVF:pmA==='forte'?PF:pmA==='faible'?PW:1;
+    rB*=pmB==='tres_forte'?PVF:pmB==='forte'?PF:pmB==='faible'?PW:1;
+    var lA=rA*pA*remaining,lB=Math.max(rB*pB,0.003)*remaining;
+
+    var p=0;
+    if(state.m==='score'){p=1-Math.exp(-lA)}
+    else{
+      for(var a=0;a<=10;a++)for(var b=0;b<=10;b++){
+        var fa=sA+a,fb=sB+b,pr=pois(lA,a)*pois(lB,b);
+        if(state.m==='win'?fa>fb:fa>=fb)p+=pr;
+      }
+    }
+    p=Math.min(Math.max(p,0.0001),0.9999);
+    var fair=1/p,minOdds=fair*(1+margin);
+    $('fP').textContent=fr(p*100,0)+' %';
+    $('fFair').textContent=fr(fair,2);
+    $('fMin').textContent=fr(minOdds,2);
+    $('verdict').className='verdict info';
+    $('call').textContent='Cote minimum : '+fr(minOdds,2);
+    $('why').textContent='Prends le pari seulement si un de tes sites propose au moins '+fr(minOdds,2)+'. En dessous, passe.';
+    var posS=num($('posSel').value);
+    last={p:p,fair:fair,minOdds:minOdds,minute:minute,m:state.m,side:me,
+      score:cnt('sHome')+'-'+cnt('sAway'),pre:pre>1?pre:null,red:redRel,
+      pr:(H?state.prH:state.prA)||null,pos:isNaN(posS)?null:posS,
+      inp:{xh:num($('xHome').value),xa:num($('xAway').value),per:state.w,rem:Math.round(remaining*10)/10,ph:num($('preHome').value)||null,pa:num($('preAway').value)||null,redMin:state.red==='none'?null:num($('redMin').value),prH:state.prH||null,prA:state.prA||null}};
+  }
+  function setEmpty(t,w){
+    $('verdict').className='verdict empty';$('call').textContent=t;$('why').textContent=w;
+    ['fP','fFair','fMin'].forEach(function(i){$(i).textContent='–'});last=null;
+  }
+
+  function toast(t){$('toast').textContent=t;clearTimeout(toast.t);toast.t=setTimeout(function(){$('toast').textContent=''},2500)}
+  $('copy').addEventListener('click',function(){
+    if(!last){toast('Rien à copier : remplis d’abord l’xG.');return}
+    var t=fr(last.p*100,1);
+    try{navigator.clipboard.writeText(t).then(function(){toast('Copié : '+t+' %')},function(){toast('Probabilité : '+t+' % (copie bloquée, recopie-la)')})}
+    catch(e){toast('Probabilité : '+t+' % (copie bloquée, recopie-la)')}
+  });
+  $('useShots').addEventListener('click',function(){
+    function est(t,c){return fr(0.25*c+0.06*Math.max(t-c,0),2)}
+    $('xHome').value=est(cnt('tHome'),cnt('cHome'));$('xAway').value=est(cnt('tAway'),cnt('cAway'));
+    calc();toast('xG estimé à partir des tirs.');
+  });
+
+  // Suivi
+  var log=load(KEY_LOG,[]);
+  var mLabel={win:'Victoire',score:'Marque',dc:'Victoire ou nul'};
+  $('save').addEventListener('click',function(){
+    if(!last){toast('Il faut au moins l’xG pour noter.');return}
+    var o=num($('oddsSeen').value);o=o>1?o:null;
+    log.unshift({id:Date.now(),label:$('label').value||'Match',m:last.m,side:last.side,minute:last.minute,score:last.score,
+      p:last.p,minOdds:last.minOdds,o:o,value:o?o>=last.minOdds:null,pre:last.pre,red:last.red,pr:last.pr,pos:last.pos,inp:last.inp,res:null});
+    store(KEY_LOG,log);render();toast('Situation notée.');
+  });
+  function render(){
+    var ul=$('log');ul.innerHTML='';
+    if(!log.length){ul.innerHTML='<li class="empty-log">Aucune situation notée. Note chaque entrée envisagée, même celles où tu passes : c’est comme ça qu’on saura si tes estimations battent les cotes.</li>'}
+    log.forEach(function(x){
+      var li=document.createElement('li');
+      li.innerHTML='<div class="top"><span></span><span></span></div><div class="meta"></div><div class="res"><button type="button" data-r="win">Gagné</button><button type="button" data-r="loss">Perdu</button><button type="button" data-r="del">Retirer</button></div>';
+      var sp=li.querySelectorAll('.top span');sp[0].textContent=x.label;sp[1].textContent=x.o?fr(x.o,2):'';
+      var parts=[mLabel[x.m]||x.m];
+      if(x.side)parts.push('sur '+(x.side==='home'?'le domicile':'l’extérieur'));
+      parts.push(x.minute+'e',x.score);
+      if(x.pre)parts.push('pré-match '+fr(x.pre,2));
+      if(x.red==='opp')parts.push('rouge adverse');else if(x.red==='team')parts.push('rouge pour ton équipe');
+      if(x.pr)parts.push('pression '+x.pr);
+      if(x.pos!=null)parts.push('possession '+Math.round(x.pos)+' %');
+      parts.push('proba '+fr(x.p*100,0)+' %');
+      if(x.minOdds)parts.push('cote mini '+fr(x.minOdds,2));
+      if(x.o)parts.push(x.value?'avec valeur':'sans valeur');
+      li.querySelector('.meta').textContent=parts.join(', ');
+      li.querySelectorAll('[data-r]').forEach(function(b){
+        if(b.dataset.r===x.res)b.setAttribute('aria-pressed','true');
+        b.addEventListener('click',function(){
+          if(b.dataset.r==='del'){log=log.filter(function(y){return y.id!==x.id})}
+          else{x.res=x.res===b.dataset.r?null:b.dataset.r}
+          store(KEY_LOG,log);render();
+        });
+      });
+      ul.appendChild(li);
+    });
+    var done=log.filter(function(x){return x.res}),wins=done.filter(function(x){return x.res==='win'});
+    var exp=done.reduce(function(s,x){return s+x.p},0);
+    var withO=done.filter(function(x){return x.o});
+    var profit=withO.reduce(function(s,x){return s+(x.res==='win'?x.o-1:-1)},0);
+    $('sN').textContent=done.length;
+    $('sW').textContent=wins.length+' / '+fr(exp,1);
+    $('sR').textContent=withO.length?((profit>=0?'+':'')+fr(profit/withO.length*100,0)+' %'):'–';
+  }
+  // Sauvegarde du formulaire : rien n'est perdu si la page se recharge
+  var KEY_FORM='vl-form',SKIP={shot:1,pLate:1,pRed:1,pWear:1,pK:1,pPush:1,pPrVF:1,pPrF:1,pPrW:1};
+  function formInputs(){return [].filter.call(document.querySelectorAll('input[id]'),function(i){return !SKIP[i.id]})}
+  function saveForm(){
+    var v={};formInputs().forEach(function(i){v[i.id]=i.value});
+    store(KEY_FORM,{v:v,s:{m:state.m,side:state.side,red:state.red,prH:state.prH,prA:state.prA,w:state.w,redManual:!!state.redManual,redAuto:!!state.redAuto},st:$('photoStatus').textContent});
+  }
+  function applySegs(){setSeg('mkt','m',state.m);setSeg('side','s',state.side);setSeg('red','r',state.red);setSeg('prH','p',state.prH);setSeg('prA','p',state.prA)}
+  function restoreForm(){
+    var f=load(KEY_FORM,null);if(!f)return;
+    Object.keys(f.v||{}).forEach(function(k){var e=$(k);if(e&&!SKIP[k])e.value=f.v[k]});
+    var s=f.s||{};['m','side','red','prH','prA','w'].forEach(function(k){if(s[k]!=null)state[k]=s[k]});
+    state.redManual=!!s.redManual;state.redAuto=!!s.redAuto;prevSide=state.side;applySegs();
+    if(f.st)$('photoStatus').textContent=f.st;
+  }
+  $('resetForm').addEventListener('click',function(){
+    formInputs().forEach(function(i){i.value=i.defaultValue});
+    state.m='win';state.side='home';state.red='none';state.prH='';state.prA='';state.w='full';state.redManual=false;state.redAuto=false;prevSide='home';
+    applySegs();$('photoStatus').textContent='';
+    try{localStorage.removeItem(KEY_FORM)}catch(e){}
+    calc();toast('Formulaire vidé pour un nouveau match.');
+  });
+  restoreForm();render();calc();
+
+  $('exportLog').addEventListener('click',function(){
+    if(!log.length){toast('Le suivi est vide.');return}
+    var rows=['date;match;pari_sur;marche;minute;score_dom_ext;cote_prematch;rouge;pression;possession;proba;cote_min;cote_vue;valeur;resultat;xg_dom;xg_ext;periode_xg;min_restantes;pre_dom;pre_ext;min_rouge;pression_dom;pression_ext'];
+    log.slice().reverse().forEach(function(x){
+      var d=new Date(x.id),i=x.inp||{};
+      function c(v){return v==null||(typeof v==='number'&&isNaN(v))?'':v}
+      rows.push([d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),(x.label||'').replace(/;/g,','),x.side||'',x.m,x.minute,x.score,x.pre||'',x.red||'none',x.pr||'',x.pos!=null?Math.round(x.pos):'',(x.p*100).toFixed(1),x.minOdds?x.minOdds.toFixed(2):'',x.o||'',x.o?(x.value?'oui':'non'):'',x.res||'',c(i.xh),c(i.xa),c(i.per),c(i.rem),c(i.ph),c(i.pa),c(i.redMin),c(i.prH),c(i.prA)].join(';'));
+    });
+    var t=rows.join('\n');
+    try{navigator.clipboard.writeText(t).then(function(){toast(log.length+' situations copiées. Colle-les dans la conversation.')},function(){toast('Copie bloquée par le navigateur.')})}
+    catch(e){toast('Copie bloquée par le navigateur.')}
+  });
+
+  // Lecture des screens Packball + Flashscore par Claude
+  var SHOT_PROMPT='These are phone screenshots of one live football match, from Packball and/or Flashscore. Identify what each screenshot shows, read them together, and reply with only one JSON object, no other text:\n'+
+    '{"minute": number|null, "added_time": number|null, "score_home": int|null, "score_away": int|null, "prematch_home": number|null, "prematch_away": number|null, "stats_period": "match"|"2nd_half"|"1st_half"|null, "xg_home": number|null, "xg_away": number|null, "shots_home": int|null, "shots_away": int|null, "on_target_home": int|null, "on_target_away": int|null, "packball_timeline_2nd_half": [{"minute": int, "side": "home"|"away", "icon": "goal"|"disallowed_goal"|"shot_on_target"|"shot_off_target"|"blocked_shot"|"corner"|"yellow_card"|"red_card"|"other"}]|null, "second_half_events": {"goals": [int]|null, "penalties": [int]|null, "substitutions": [int]|null, "yellow_cards": [int]|null, "red_cards": [int]|null, "disallowed_goals": [int]|null}|null, "red_card": {"team": "home"|"away"|null, "minute": number|null}, "pressure_home": "tres_forte"|"forte"|"moyenne"|"faible"|null, "pressure_away": "tres_forte"|"forte"|"moyenne"|"faible"|null, "packball_image": int|null, "packball_chart_box": [number, number, number, number]|null, "possession_home": number|null}\n'+
+    'packball_timeline_2nd_half: if there is a Packball screenshot, FIRST scan its timeline carefully from left to right, starting at the 45 minute line, and list every icon you see above and below the pressure bars, with its minute (from the time axis), its side (above the centre line = home, below = away) and its type. On Packball a goal is a football icon in a GREEN circle. A DISALLOWED goal is a football icon in a RED or pink circle with a small curved pink arrow (like an undo arrow) just above it. It usually sits right next to a green football icon at the same minute: that pair means a goal was scored then cancelled, so list it as one disallowed_goal and do NOT list the green one as a goal. Look closely at the colour of every football icon and at any small arrow above it. A circle with a tick is a shot on target, a circle with a cross a shot off target, a small square a blocked shot, a flag a corner. Null if there is no Packball screenshot. '+
+    'Rules. In both apps the home team is on the left and the away team on the right. '+
+    'minute: the current match minute (live clock, or the latest event / where the timeline ends); null if unclear. '+
+    'added_time: the announced added time of the current half in minutes, if shown (Packball shows for example "Heure ajoutée: 6 min" or a clock like 95:07(+6)); null if not shown. '+
+    'prematch_home/away: on Packball, the pre-match decimal odds of each team: a small decimal number (between 1.01 and 30, for example 1.91, 4.08, 1.66 or 5.1) printed near each team crest, next to or under its league position (a number followed by °, such as 10°), sometimes alone above the crest at the top left and top right of the match header. Read them carefully even if the text is small, and do not confuse them with the league position or the score. '+
+    'Flashscore statistics screenshot: read Expected Goals (xG), total shots, shots on target and ball possession, and set stats_period from the selected tab (MATCH = "match", 2. MI-TEMPS = "2nd_half", 1. MI-TEMPS = "1st_half"). If there is no Flashscore statistics screenshot, take total shots, shots on target and possession from the Packball stat tiles (whole match), set xg to null and stats_period to "match". '+
+    'second_half_events, from the Flashscore summary (Résumé) screenshot: list only events after the "2. MI-TEMPS" separator, each as its minute (write 90+2 as 92). goals = goals NOT scored from a penalty. penalties = every penalty, scored or missed (a penalty goal goes ONLY in penalties, never in goals). substitutions = one entry per substitution, with its minute. yellow_cards, red_cards (a second yellow counts as red), disallowed_goals = goals cancelled or disallowed (by VAR or for offside or a foul), read from BOTH apps: Flashscore events and the Packball timeline, where a disallowed goal is shown as a ball icon with a small arrow; count each disallowed goal once even if it appears in both apps, and only in the second half (on Packball, to the right of the 45 minute line). If there is no Résumé screenshot, set every list to null except disallowed_goals, which can still be read from Packball. '+
+    'red_card: the most recent red card of the match (either half), with the team and minute, from Flashscore events or from the red square on the Packball timeline (home events are above the centre line, away events below it). '+
+    'Pressure over the last 10 minutes of play, from the Packball pressure chart: home bars are orange above the centre line, away bars blue below it. Around the centre line there is a faint shaded band (a threshold zone) on each side. For each team, look only at its own side over the last 10 minutes of play. tres_forte = almost every bar is far beyond the shaded band (often two or three times its height), the bars form a continuous block with virtually no gaps, and there are several shots or corners in that window. forte = most bars clearly go beyond the shaded band, many are tall, and they follow each other with few gaps: a dense, sustained wall of bars, often with shot or corner icons clustered in that zone. moyenne = irregular: a mix of tall, medium and very short bars, with gaps, pushing in bursts rather than continuously. faible = bars stay mostly inside the shaded band, or are sparse and short. Judge each team separately. '+
+    'packball_image: the 0-based position, in the order the images were given, of the Packball screenshot (null if none). packball_chart_box: on that screenshot, the box around the pressure chart including the icons above and below it and the minute labels under it, as fractions of the image width and height [left, top, right, bottom], each between 0 and 1. '+
+    'possession_home: ball possession percentage of the home team. '+
+    'Use null for anything you cannot read with confidence. Never guess a number.';
+  var DIS_PROMPT='This image is an enlarged crop of the pressure chart from the Packball website for one football match. The time axis with minute labels (15, 30, 45, 60, 75, 90) is at the bottom; the 45 line marks half-time. Home team icons are above the centre line, away team icons below it. Find EVERY football (soccer ball) icon in the image. A normal goal is a football in a GREEN circle. A DISALLOWED goal is a football in a RED or pink circle, with a small curved pink arrow (like an undo arrow) just above it; it usually sits right next to a green football at the same minute. Check the colour of each football icon one by one. Estimate the minute of each icon from its horizontal position relative to the minute labels. Reply with only one JSON object, no other text: {"goals":[{"minute":int,"side":"home"|"away"}],"disallowed_goals":[{"minute":int,"side":"home"|"away"}]}';
+  function checkDisallowed(sample,list,d){
+    var idx=nv(d&&d.packball_image),box=d&&d.packball_chart_box;
+    if(idx==null||!list[idx]||!Array.isArray(box)||box.length!==4||typeof createImageBitmap!=='function')return;
+    var b=box.map(Number);if(b.some(function(v){return !isFinite(v)}))return;
+    var x0=Math.max(0,Math.min(b[0],b[2])-0.02),x1=Math.min(1,Math.max(b[0],b[2])+0.02),y0=Math.max(0,Math.min(b[1],b[3])-0.04),y1=Math.min(1,Math.max(b[1],b[3])+0.04);
+    if(x1-x0<0.2||y1-y0<0.05)return;
+    var st=$('photoStatus'),base=st.textContent;st.textContent=base+' Vérification des buts refusés…';
+    createImageBitmap(list[idx]).then(function(img){
+      var sx=x0*img.width,sy=y0*img.height,sw=(x1-x0)*img.width,sh=(y1-y0)*img.height,sc=Math.max(1,Math.min(3,1600/sw));
+      var c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);
+      c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+      return new Promise(function(res){c.toBlob(res,'image/png')});
+    }).then(function(blob){
+      if(!blob)throw new Error('crop');
+      return sample.json(DIS_PROMPT,{images:[blob],modelTier:'default',effort:'medium',cache:false});
+    }).then(function(r){
+      var arr=r&&Array.isArray(r.disallowed_goals)?r.disallowed_goals:[];
+      var n=arr.filter(function(e){var m=nv(e&&e.minute);return m!=null&&m>45}).length,cur=cnt('evD');
+      if(n>cur){$('evD').value=n;calc()}
+      st.textContent=base+(n>cur?' Vérification Packball : '+n+' but'+(n>1?'s':'')+' refusé'+(n>1?'s':'')+' trouvé'+(n>1?'s':'')+', compteur mis à jour.':' Vérification Packball : aucun but refusé de plus.');
+      saveForm();
+    }).catch(function(){st.textContent=base});
+  }
+  var lastAuto=null;
+  function nv(v){return typeof v==='number'&&isFinite(v)?v:null}
+  function applyShot(d){
+    var st=$('photoStatus');
+    if(!d||typeof d!=='object'){st.textContent='Rien de lisible sur ces screens.';return}
+    var got=[],warn=[];
+    var mi=nv(d.minute);if(mi!=null){$('minute').value=Math.round(mi);got.push(Math.round(mi)+'e')}
+    var at=nv(d.added_time);if(at!=null){$('announced').value=Math.round(at);got.push('temps annoncé '+Math.round(at)+' min')}
+    var a=nv(d.score_home),b=nv(d.score_away);if(a!=null&&b!=null){$('sHome').value=a;$('sAway').value=b;got.push(a+'-'+b)}
+    var ph=nv(d.prematch_home),pa=nv(d.prematch_away);
+    if(ph!=null&&ph>1)$('preHome').value=fr(ph,2);
+    if(pa!=null&&pa>1)$('preAway').value=fr(pa,2);
+    if((ph!=null&&ph>1)||(pa!=null&&pa>1))got.push('pré-match '+(ph?fr(ph,2):'?')+' / '+(pa?fr(pa,2):'?'));
+    else warn.push('cote pré-match non lue, entre-la à la main');
+    var per=d.stats_period;
+    if(per==='2nd_half')state.w='half';else if(per==='match')state.w='full';
+    var xh=nv(d.xg_home),xa=nv(d.xg_away);
+    var th=nv(d.shots_home),ch=nv(d.on_target_home),ta=nv(d.shots_away),ca=nv(d.on_target_away);
+    if(th!=null&&ta!=null){$('tHome').value=th;$('cHome').value=ch==null?'':ch;$('tAway').value=ta;$('cAway').value=ca==null?'':ca}
+    if(per!=='1st_half'&&xh!=null&&xa!=null){
+      $('xHome').value=fr(xh,2);$('xAway').value=fr(xa,2);lastAuto=null;
+      got.push('xG '+fr(xh,2)+'-'+fr(xa,2)+(per==='2nd_half'?' (2e mi-temps)':''));
+    }else if(per!=='1st_half'&&th!=null&&ta!=null){
+      var cur=$('xHome').value.trim();
+      if(cur===''||cur===lastAuto){
+        $('xHome').value=fr(0.25*(ch||0)+0.06*Math.max(th-(ch||0),0),2);
+        $('xAway').value=fr(0.25*(ca||0)+0.06*Math.max(ta-(ca||0),0),2);
+        lastAuto=$('xHome').value;got.push('xG estimé avec les tirs '+th+'-'+ta);
+      }
+    }
+    var ev=d.second_half_events;
+    if(ev&&typeof ev==='object'){
+      function L(k){var x=ev[k];return Array.isArray(x)?x.map(Number).filter(function(v){return isFinite(v)}):null}
+      var g=L('goals'),pe=L('penalties'),su=L('substitutions'),y=L('yellow_cards'),rr=L('red_cards'),di=L('disallowed_goals');
+      if(g)$('evG').value=g.length;if(pe)$('evP').value=pe.length;
+      if(su){var subs={};su.forEach(function(m){if(m>46)subs[Math.round(m)]=1});$('evS').value=Object.keys(subs).length}
+      if(y)$('evC').value=y.length;if(rr)$('evR').value=rr.length;
+      got.push('arrêts de jeu remplis');
+    }
+    var tl=Array.isArray(d.packball_timeline_2nd_half)?d.packball_timeline_2nd_half:null;
+    var tlDis=tl?tl.filter(function(e){return e&&e.icon==='disallowed_goal'&&nv(e.minute)!=null&&e.minute>45}).length:0;
+    var evDis=(ev&&Array.isArray(ev.disallowed_goals))?ev.disallowed_goals.length:null;
+    if(evDis!=null||tl){var nd=Math.max(evDis||0,tlDis);$('evD').value=nd;got.push(nd?nd+' but'+(nd>1?'s':'')+' refusé'+(nd>1?'s':''):'aucun but refusé vu')}
+    var rc=d.red_card||{},rt=rc.team,rmin=nv(rc.minute);
+    if(rt==='home'||rt==='away'){
+      state.redManual=true;setRed(rt,false);
+      if(rmin!=null)$('redMin').value=Math.round(rmin);
+      got.push('rouge '+(rt==='home'?'domicile':'extérieur')+(rmin!=null?' '+Math.round(rmin)+'e':''));
+    }
+    ['home','away'].forEach(function(t){
+      var v=d['pressure_'+t],key=t==='home'?'prH':'prA';
+      if(v==='tres_forte'||v==='forte'||v==='moyenne'||v==='faible'){state[key]=v;setSeg(key,'p',v);got.push('pression '+(t==='home'?'dom.':'ext.')+' '+(v==='tres_forte'?'très forte':v))}
+    });
+    var po=nv(d.possession_home);if(po!=null){var ps=state.side==='home'?po:100-po;$('posSel').value=Math.round(ps);got.push('possession '+Math.round(ps)+' %')}
+    calc();
+    st.textContent=(got.length?'Lu : '+got.join(', ')+'. Vérifie, puis compare la cote minimum à tes sites.':'Rien de lisible sur ces screens.')+(warn.length?' Attention : '+warn.join(', ')+'.':'');
+    saveForm();
+  }
+  function readShot(sample,files,max){
+    var st=$('photoStatus'),list=[].slice.call(files,0,max);
+    st.textContent='Lecture de '+list.length+' capture'+(list.length>1?'s':'')+'…'+(files.length>max?' (seulement les '+max+' premières)':'');
+    sample.json(SHOT_PROMPT,{images:list,modelTier:'default',effort:'low',cache:false}).then(function(d){applyShot(d);checkDisallowed(sample,list,d)},function(e){
+      var c=e&&e.code;
+      if(['not_granted','sampling_disabled','images_unavailable','not_declared','capability_disabled','capability_removed'].indexOf(c)>=0)st.textContent='La lecture de screens n’est pas disponible ici.';
+      else if(c==='rate_limited')st.textContent='Trop de demandes. Réessaie dans un moment.';
+      else if(c==='image_rejected')st.textContent='Image refusée. Essaie une autre capture.';
+      else if(c==='invalid_json')st.textContent='Lecture ratée. Réessaie avec les mêmes captures.';
+      else st.textContent='Erreur de lecture. Réessaie.';
+    });
+  }
+  (function(){
+    if(!window.claude||typeof window.claude.use!=='function')return;
+    window.claude.use('sample').then(function(sample){
+      if(!sample)return;
+      sample.limits().then(function(lim){
+        if(!lim||!lim.images)return;
+        var max=lim.images.maxCount||3;
+        $('photoBlock').hidden=false;
+        if(lim.images.mediaTypes)$('shot').accept=lim.images.mediaTypes.join(',');
+        var pending=[],urls=[];
+        function renderTray(){
+          urls.forEach(function(u){try{URL.revokeObjectURL(u)}catch(e){}});urls=[];
+          var t=$('tray');t.innerHTML='';
+          pending.forEach(function(f){var u=URL.createObjectURL(f);urls.push(u);var i=document.createElement('img');i.src=u;i.alt='Capture en attente';t.appendChild(i)});
+          t.hidden=!pending.length;$('trayActions').hidden=!pending.length;
+          $('readBtn').textContent='Lire '+(pending.length>1?'les '+pending.length+' captures':'la capture');
+        }
+        function go(){if(!pending.length)return;var l=pending.slice();pending=[];renderTray();readShot(sample,l,max)}
+        function addFiles(fs){
+          fs=[].filter.call(fs||[],function(f){return f&&/^image\//.test(f.type)});
+          if(!fs.length)return;
+          fs.forEach(function(f){if(pending.length<max)pending.push(f)});
+          renderTray();
+          if(pending.length>=Math.min(3,max))go();
+          else $('photoStatus').textContent=pending.length+' capture'+(pending.length>1?'s':'')+' en attente. Ajoutes-en ou lance la lecture.';
+        }
+        $('readBtn').addEventListener('click',go);
+        $('clearBtn').addEventListener('click',function(){pending=[];renderTray();$('photoStatus').textContent=''});
+        $('shot').addEventListener('change',function(){var copy=[].slice.call(this.files||[]);this.value='';addFiles(copy)});
+        var dz=$('drop');
+        ['dragenter','dragover'].forEach(function(t){dz.addEventListener(t,function(e){e.preventDefault();dz.classList.add('over')})});
+        ['dragleave','drop'].forEach(function(t){dz.addEventListener(t,function(e){e.preventDefault();dz.classList.remove('over')})});
+        dz.addEventListener('drop',function(e){addFiles(e.dataTransfer&&e.dataTransfer.files)});
+        document.addEventListener('paste',function(e){var fs=e.clipboardData&&e.clipboardData.files;if(fs&&fs.length){e.preventDefault();addFiles(fs)}});
+      },function(){});
+    },function(){});
+  })();
+})();
+</script>
+</body>
+</html>
